@@ -4,12 +4,12 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # Φόρτωση των Excel αρχείων
-all_df = pd.read_excel("dont_touch.xlsx")  # Αρχείο με αριθμούς και email
+all_df = pd.read_excel("elearning.xlsx")  # Αρχείο με αριθμούς και email
 grades_df = pd.read_excel("grades.xlsx")  # Αρχείο με αριθμούς και βαθμούς
 
-# Μετατροπή σε λεξικό για γρήγορη αναζήτηση
-students = all_df.set_index("Number").to_dict(orient="index")
-grades = grades_df.set_index("Number")["Grade"].to_dict()
+all_df["Dep/Student ID"] = all_df["Dep/Student ID"].str.split("/").str[1].astype(str)
+students = all_df.set_index("Dep/Student ID").to_dict(orient="index")
+grades = grades_df.set_index("Student ID")["Grade"].to_dict()
 
 # Ρύθμιση SMTP για αποστολή email
 #todo: for gmail    :  "smtp.gmail.com"
@@ -25,16 +25,16 @@ server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
 server.starttls()
 server.login(EMAIL_SENDER, EMAIL_PASSWORD)
 
-subject = input("ΟΝΟΜΑ ΜΑΘΗΜΑΤΟΣ")
+subject = input("ΟΝΟΜΑ ΜΑΘΗΜΑΤΟΣ: ")
+
 # Αποστολή email σε κάθε φοιτητή
 for number, grade in grades.items():
-    if number in students:
-        recipient_email = students[number]["Mail"]
-        student_name = students[number]["Name"]
+    if str(number) in students:
+        recipient_email = students[str(number)]["Email address"]
+        student_name = students[str(number)]["First name"]
 
-        #Δημιουργία μηνύματος
-        body = f"{student_name},\n\nΒαθμός:{grade}\n"
-
+        # Δημιουργία μηνύματος
+        body = f"{student_name},\n\nΒαθμός: {grade}\n"
         msg = MIMEMultipart()
         msg["From"] = EMAIL_SENDER
         msg["To"] = recipient_email
